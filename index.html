@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NextFeed Thumbs｜サムネ診断ツール</title>
+  <meta name="description" content="YouTubeサムネイルの明るさ・色味・情報量を簡易診断できる無料ツールです。" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    header {
+      padding: 20px 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    nav {
+      display: flex;
+      gap: 18px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    nav a {
+      color: #cbd5e1;
+    }
+
+    nav a:hover {
+      color: #38bdf8;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      margin: 0 0 12px;
+      color: #38bdf8;
+    }
+
+    .hero p {
+      margin: 0 auto;
+      max-width: 700px;
+      color: #cbd5e1;
+      font-size: 16px;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    .tool-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      color: #f8fafc;
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .input,
+    .file-input,
+    .button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 14px;
+      font-size: 15px;
+    }
+
+    .input::placeholder {
+      color: #94a3b8;
+    }
+
+    .input:focus,
+    .file-input:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+
+    .button {
+      margin-top: 14px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      border: none;
+    }
+
+    .button:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .sub-note {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .preview-wrap {
+      display: grid;
+      gap: 18px;
+    }
+
+    .thumb-preview {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #0b1220;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .thumb-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .video-preview {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #0b1220;
+    }
+
+    .video-preview iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .stat-title {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .score-bar {
+      margin-top: 10px;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: #38bdf8;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .advice-box {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(56,189,248,0.08);
+      border: 1px solid rgba(56,189,248,0.22);
+    }
+
+    .advice-box h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #7dd3fc;
+    }
+
+    .advice-box ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #e2e8f0;
+    }
+
+    .advice-box li + li {
+      margin-top: 6px;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      padding: 30px 20px 40px;
+    }
+
+    @media (max-width: 860px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 34px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="#">ホーム</a>
+      <a href="#tool">ツール</a>
+      <a href="#about">概要</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>NextFeed Thumbs</h1>
+    <p>
+      YouTubeサムネイルの見やすさを、明るさ・色の強さ・情報量の観点から簡易診断します。
+      初版は画像アップロード型です。
+    </p>
+  </section>
+
+  <main class="wrap">
+    <section id="tool" class="tool-box">
+      <div class="grid">
+        <div class="panel">
+          <h2>サムネ診断</h2>
+
+          <label class="label" for="youtubeUrl">YouTube動画URL（任意）</label>
+          <input
+            id="youtubeUrl"
+            class="input"
+            type="text"
+            placeholder="https://www.youtube.com/watch?v=..."
+          />
+
+          <label class="label" for="thumbFile" style="margin-top: 16px;">サムネ画像</label>
+          <input
+            id="thumbFile"
+            class="file-input"
+            type="file"
+            accept="image/*"
+          />
+
+          <button id="analyzeBtn" class="button">診断する</button>
+
+          <p class="sub-note">
+            URLは動画確認用です。診断自体はアップロード画像を元に行います。
+          </p>
+
+          <div id="status" class="status"></div>
+        </div>
+
+        <div class="panel">
+          <h2>プレビュー</h2>
+
+          <div class="preview-wrap">
+            <div id="thumbPreview" class="thumb-preview">
+              ここにサムネ画像が表示されます
+            </div>
+
+            <div id="videoPreview" class="video-preview hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-title">明るさ</div>
+          <div id="brightnessValue" class="stat-value">-</div>
+          <div class="score-bar"><div id="brightnessBar" class="score-bar-fill"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">色の強さ</div>
+          <div id="saturationValue" class="stat-value">-</div>
+          <div class="score-bar"><div id="saturationBar" class="score-bar-fill"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">情報量</div>
+          <div id="complexityValue" class="stat-value">-</div>
+          <div class="score-bar"><div id="complexityBar" class="score-bar-fill"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">一覧映えスコア</div>
+          <div id="overallValue" class="stat-value">-</div>
+          <div class="score-bar"><div id="overallBar" class="score-bar-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="advice-box">
+        <h3>診断コメント</h3>
+        <ul id="adviceList">
+          <li>画像をアップロードして診断を開始してください。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="about" style="margin-top: 28px;">
+      <div class="panel">
+        <h2>このツールについて</h2>
+        <p style="margin: 0; color: #cbd5e1;">
+          このツールはサムネイル画像のピクセル情報をもとに、
+          明るさ、色の強さ、情報量を簡易的に分析する試作版です。
+          CTRや再生数を保証するものではありませんが、
+          一覧で埋もれやすいサムネの傾向を確認する用途に向いています。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © NextFeed Tools
+  </footer>
+
+  <script>
+    const youtubeUrlInput = document.getElementById("youtubeUrl");
+    const thumbFileInput = document.getElementById("thumbFile");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const thumbPreview = document.getElementById("thumbPreview");
+    const videoPreview = document.getElementById("videoPreview");
+    const statusEl = document.getElementById("status");
+
+    const brightnessValue = document.getElementById("brightnessValue");
+    const saturationValue = document.getElementById("saturationValue");
+    const complexityValue = document.getElementById("complexityValue");
+    const overallValue = document.getElementById("overallValue");
+
+    const brightnessBar = document.getElementById("brightnessBar");
+    const saturationBar = document.getElementById("saturationBar");
+    const complexityBar = document.getElementById("complexityBar");
+    const overallBar = document.getElementById("overallBar");
+
+    const adviceList = document.getElementById("adviceList");
+
+    function extractVideoId(url) {
+      if (!url) return null;
+
+      try {
+        const parsed = new URL(url);
+
+        if (parsed.hostname.includes("youtu.be")) {
+          return parsed.pathname.replace("/", "").trim();
+        }
+
+        if (parsed.searchParams.get("v")) {
+          return parsed.searchParams.get("v");
+        }
+
+        const shortsMatch = parsed.pathname.match(/\\/shorts\\/([^/?]+)/);
+        if (shortsMatch) return shortsMatch[1];
+
+        const embedMatch = parsed.pathname.match(/\\/embed\\/([^/?]+)/);
+        if (embedMatch) return embedMatch[1];
+
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    function updateVideoPreview() {
+      const videoId = extractVideoId(youtubeUrlInput.value.trim());
+
+      if (!videoId) {
+        videoPreview.classList.add("hidden");
+        videoPreview.innerHTML = "";
+        return;
+      }
+
+      videoPreview.classList.remove("hidden");
+      videoPreview.innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/${videoId}"
+          title="YouTube video preview"
+          allowfullscreen>
+        </iframe>
+      `;
+    }
+
+    youtubeUrlInput.addEventListener("input", updateVideoPreview);
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.style.color = isError ? "#fda4af" : "#cbd5e1";
+    }
+
+    function clamp(num, min, max) {
+      return Math.min(Math.max(num, min), max);
+    }
+
+    function setScore(elValue, elBar, score) {
+      const rounded = Math.round(score);
+      elValue.textContent = rounded;
+      elBar.style.width = `${rounded}%`;
+    }
+
+    function renderAdvice(items) {
+      adviceList.innerHTML = "";
+      items.forEach((text) => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        adviceList.appendChild(li);
+      });
+    }
+
+    function analyzeImage(img) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+      const maxWidth = 320;
+      const scale = Math.min(1, maxWidth / img.width);
+      const width = Math.max(1, Math.floor(img.width * scale));
+      const height = Math.max(1, Math.floor(img.height * scale));
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const { data } = ctx.getImageData(0, 0, width, height);
+
+      let totalBrightness = 0;
+      let totalSaturation = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+        totalBrightness += brightness;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const saturation = max === 0 ? 0 : ((max - min) / max) * 255;
+        totalSaturation += saturation;
+      }
+
+      const pixelCount = data.length / 4;
+      const avgBrightness = totalBrightness / pixelCount;
+      const avgSaturation = totalSaturation / pixelCount;
+
+      let edgeCount = 0;
+      const brightnessMap = [];
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        brightnessMap.push(r * 0.299 + g * 0.587 + b * 0.114);
+      }
+
+      for (let y = 0; y < height - 1; y++) {
+        for (let x = 0; x < width - 1; x++) {
+          const idx = y * width + x;
+          const current = brightnessMap[idx];
+          const right = brightnessMap[idx + 1];
+          const bottom = brightnessMap[idx + width];
+
+          const diff = Math.abs(current - right) + Math.abs(current - bottom);
+          if (diff > 60) edgeCount++;
+        }
+      }
+
+      const maxEdges = (width - 1) * (height - 1);
+      const complexityScore = (edgeCount / maxEdges) * 100;
+
+      const brightnessScore = clamp((avgBrightness / 255) * 100, 0, 100);
+      const saturationScore = clamp((avgSaturation / 255) * 100 * 1.35, 0, 100);
+      const complexityClamped = clamp(complexityScore, 0, 100);
+
+      let overall =
+        brightnessScore * 0.35 +
+        saturationScore * 0.25 +
+        (100 - Math.abs(complexityClamped - 45) * 1.6) * 0.40;
+
+      overall = clamp(overall, 0, 100);
+
+      return {
+        brightness: brightnessScore,
+        saturation: saturationScore,
+        complexity: complexityClamped,
+        overall
+      };
+    }
+
+    function buildAdvice(scores) {
+      const advice = [];
+
+      if (scores.brightness < 35) {
+        advice.push("全体が暗めです。スマホ一覧では沈みやすいので、背景か被写体を少し明るくすると見つけやすくなります。");
+      } else if (scores.brightness > 80) {
+        advice.push("全体がかなり明るめです。白飛び気味だと印象が弱くなるので、影や縁取りでメリハリを足すと安定します。");
+      } else {
+        advice.push("明るさは悪くありません。一覧での視認性は比較的取りやすい範囲です。");
+      }
+
+      if (scores.saturation < 28) {
+        advice.push("色の強さが控えめです。赤や黄などの目立つ色を一点だけ入れるとクリック誘導が強くなりやすいです。");
+      } else if (scores.saturation > 75) {
+        advice.push("色がかなり強めです。派手さはありますが、うるさく見える場合は色数を少し絞ると見やすくなります。");
+      } else {
+        advice.push("色味の強さはちょうどよく、目立ちやすさと見やすさのバランスが取れています。");
+      }
+
+      if (scores.complexity < 18) {
+        advice.push("情報量は少なめです。シンプルで強い反面、内容が伝わりにくい場合は短い文字や象徴的な要素を1つ足すと良くなります。");
+      } else if (scores.complexity > 65) {
+        advice.push("情報量が多めです。小さい画面ではごちゃついて見えやすいので、要素を1〜2個減らすと視認性が上がります。");
+      } else {
+        advice.push("情報量は適度です。サムネ一覧でも内容の伝わりやすさを保ちやすいバランスです。");
+      }
+
+      if (scores.overall >= 75) {
+        advice.push("一覧映えはかなり良好です。初見でも目に留まりやすい構成に近いです。");
+      } else if (scores.overall >= 55) {
+        advice.push("全体として悪くありません。もう一段伸ばすなら、色の差か主役の強調を足すと変化が出やすいです。");
+      } else {
+        advice.push("改善余地があります。まずは背景の整理、明るさ調整、要素数の削減から見直すのがおすすめです。");
+      }
+
+      return advice;
+    }
+
+    analyzeBtn.addEventListener("click", () => {
+      const file = thumbFileInput.files[0];
+      updateVideoPreview();
+
+      if (!file) {
+        setStatus("まずはサムネ画像をアップロードしてください。", true);
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        setStatus("画像ファイルを選択してください。", true);
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const img = new Image();
+
+        img.onload = () => {
+          thumbPreview.innerHTML = "";
+          const previewImg = document.createElement("img");
+          previewImg.src = event.target.result;
+          previewImg.alt = "thumbnail preview";
+          thumbPreview.appendChild(previewImg);
+
+          const scores = analyzeImage(img);
+
+          setScore(brightnessValue, brightnessBar, scores.brightness);
+          setScore(saturationValue, saturationBar, scores.saturation);
+          setScore(complexityValue, complexityBar, scores.complexity);
+          setScore(overallValue, overallBar, scores.overall);
+
+          const advice = buildAdvice(scores);
+          renderAdvice(advice);
+
+          setStatus("診断が完了しました。");
+        };
+
+        img.onerror = () => {
+          setStatus("画像の読み込みに失敗しました。別の画像で試してください。", true);
+        };
+
+        img.src = event.target.result;
+      };
+
+      reader.onerror = () => {
+        setStatus("ファイルの読み込みに失敗しました。", true);
+      };
+
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
