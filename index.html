@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NextFeed Thumbs｜YouTubeサムネ診断ツール</title>
-  <meta name="description" content="YouTube動画URLからサムネイルを自動取得し、明るさ・色の強さ・情報量を簡易診断できる無料ツールです。">
+  <meta name="description" content="YouTube動画URLまたは画像アップロードから、サムネイルの明るさ・色の強さ・情報量を簡易診断できる無料ツールです。">
+
   <style>
     * {
       box-sizing: border-box;
@@ -25,28 +26,38 @@
       text-decoration: none;
     }
 
-    header {
-      padding: 20px 28px;
-    }
-
-    nav {
+    /* 上部ナビ */
+    .nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: #020617;
+      padding: 12px 20px;
       display: flex;
-      gap: 18px;
-      font-size: 14px;
-      font-weight: 600;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
 
-    nav a {
+    .nav .brand {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .nav a {
       color: #cbd5e1;
+      text-decoration: none;
+      font-size: 14px;
     }
 
-    nav a:hover {
-      color: #38bdf8;
+    .nav a:hover {
+      color: #fff;
     }
 
     .hero {
       text-align: center;
-      padding: 24px 20px 10px;
+      padding: 90px 20px 10px;
     }
 
     .hero h1 {
@@ -105,9 +116,15 @@
       color: #cbd5e1;
       font-weight: 600;
       margin-bottom: 8px;
+      margin-top: 14px;
     }
 
-    .input {
+    .label:first-of-type {
+      margin-top: 0;
+    }
+
+    .input,
+    .file-input {
       width: 100%;
       background: #1e293b;
       color: #fff;
@@ -121,7 +138,8 @@
       color: #94a3b8;
     }
 
-    .input:focus {
+    .input:focus,
+    .file-input:focus {
       outline: none;
       border-color: #38bdf8;
     }
@@ -129,7 +147,7 @@
     .btn-row {
       display: flex;
       gap: 12px;
-      margin-top: 14px;
+      margin-top: 16px;
       flex-wrap: wrap;
     }
 
@@ -300,18 +318,17 @@
   </style>
 </head>
 <body>
-  <header>
-    <nav>
-      <a href="#">ホーム</a>
-      <a href="#tool">ツール</a>
-      <a href="#about">概要</a>
-    </nav>
-  </header>
+
+  <!-- 上部ナビ -->
+  <div class="nav">
+    <div class="brand">NextFeed</div>
+    <a href="https://nextfeed456.github.io/">トップへ戻る</a>
+  </div>
 
   <section class="hero">
     <h1>NextFeed Thumbs</h1>
     <p>
-      YouTube動画URLを入れるだけでサムネイルを自動取得し、
+      YouTube動画URLでも、画像アップロードでも使えるサムネ診断ツールです。
       明るさ・色の強さ・情報量から一覧映えしやすさを簡易診断します。
     </p>
   </section>
@@ -330,8 +347,16 @@
             placeholder="https://www.youtube.com/watch?v=..."
           />
 
+          <label class="label" for="imageUpload">画像アップロード</label>
+          <input
+            id="imageUpload"
+            class="file-input"
+            type="file"
+            accept="image/*"
+          />
+
           <div class="btn-row">
-            <button id="loadBtn" class="button secondary">サムネを表示</button>
+            <button id="loadBtn" class="button secondary">URLから表示</button>
             <button id="analyzeBtn" class="button primary">診断する</button>
             <button id="resetBtn" class="button secondary">リセット</button>
           </div>
@@ -339,8 +364,8 @@
           <div id="status" class="status"></div>
 
           <p class="sub-note">
-            サムネ取得はCloudflare Worker経由で行います。
-            診断対象は表示されたサムネイル画像です。
+            URL入力時はCloudflare Worker経由でサムネを取得します。
+            画像アップロード時は、その画像をそのまま診断します。
           </p>
         </div>
 
@@ -381,7 +406,7 @@
       <div class="advice-box">
         <h3>診断コメント</h3>
         <ul id="adviceList">
-          <li>URLを入力して「サムネを表示」を押してください。</li>
+          <li>URLを入力して「URLから表示」を押すか、画像をアップロードしてください。</li>
         </ul>
       </div>
 
@@ -403,6 +428,7 @@
 
   <script>
     const youtubeUrlInput = document.getElementById("youtubeUrl");
+    const imageUpload = document.getElementById("imageUpload");
     const loadBtn = document.getElementById("loadBtn");
     const analyzeBtn = document.getElementById("analyzeBtn");
     const resetBtn = document.getElementById("resetBtn");
@@ -488,7 +514,13 @@
       return "https://odd-resonance-fd5e.paladin-world-0819.workers.dev/thumb-proxy?id=" + encodeURIComponent(videoId);
     }
 
-    async function loadThumbnail() {
+    function setPreviewImage(img) {
+      currentImageElement = img;
+      thumbPreview.innerHTML = "";
+      thumbPreview.appendChild(img);
+    }
+
+    async function loadThumbnailFromUrl() {
       const url = youtubeUrlInput.value.trim();
       const videoId = extractVideoId(url);
 
@@ -505,10 +537,8 @@
       img.crossOrigin = "anonymous";
 
       img.onload = () => {
-        currentImageElement = img;
-        thumbPreview.innerHTML = "";
-        thumbPreview.appendChild(img);
-        renderAdvice(["サムネイルの取得が完了しました。「診断する」を押してください。"]);
+        setPreviewImage(img);
+        renderAdvice(["URLからサムネイルを取得しました。「診断する」を押してください。"]);
         setStatus("サムネイルを表示しました。");
       };
 
@@ -518,6 +548,43 @@
       };
 
       img.src = thumbUrl + "&t=" + Date.now();
+    }
+
+    function loadThumbnailFromUpload(file) {
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        setStatus("画像ファイルを選択してください。", true);
+        return;
+      }
+
+      currentImageElement = null;
+      setStatus("アップロード画像を読み込み中です...");
+
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const img = new Image();
+
+        img.onload = () => {
+          setPreviewImage(img);
+          renderAdvice(["アップロード画像を読み込みました。「診断する」を押してください。"]);
+          setStatus("画像を表示しました。");
+        };
+
+        img.onerror = () => {
+          currentImageElement = null;
+          setStatus("画像の読み込みに失敗しました。", true);
+        };
+
+        img.src = event.target.result;
+      };
+
+      reader.onerror = () => {
+        setStatus("ファイルの読み込みに失敗しました。", true);
+      };
+
+      reader.readAsDataURL(file);
     }
 
     function analyzeImage(img) {
@@ -639,7 +706,7 @@
 
     function runDiagnosis() {
       if (!currentImageElement) {
-        setStatus("先に「サムネを表示」を押してください。", true);
+        setStatus("先にURLから表示するか、画像をアップロードしてください。", true);
         return;
       }
 
@@ -662,20 +729,26 @@
 
     function resetAll() {
       youtubeUrlInput.value = "";
+      imageUpload.value = "";
       currentImageElement = null;
       thumbPreview.innerHTML = "ここにサムネ画像が表示されます";
       resetScores();
-      renderAdvice(["URLを入力して「サムネを表示」を押してください。"]);
+      renderAdvice(["URLを入力して「URLから表示」を押すか、画像をアップロードしてください。"]);
       setStatus("");
     }
 
-    loadBtn.addEventListener("click", loadThumbnail);
+    loadBtn.addEventListener("click", loadThumbnailFromUrl);
     analyzeBtn.addEventListener("click", runDiagnosis);
     resetBtn.addEventListener("click", resetAll);
 
+    imageUpload.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      loadThumbnailFromUpload(file);
+    });
+
     youtubeUrlInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
-        loadThumbnail();
+        loadThumbnailFromUrl();
       }
     });
 
