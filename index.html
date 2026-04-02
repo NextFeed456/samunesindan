@@ -197,27 +197,6 @@
       display: block;
     }
 
-    .video-preview {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: #020b1d;
-      margin-top: 16px;
-    }
-
-    .video-preview iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
-
-    .hidden {
-      display: none;
-    }
-
     .stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -367,12 +346,9 @@
 
         <div class="panel">
           <h2>プレビュー</h2>
-
           <div id="thumbPreview" class="thumb-preview">
             ここにサムネ画像が表示されます
           </div>
-
-          <div id="videoPreview" class="video-preview hidden"></div>
         </div>
       </div>
 
@@ -432,7 +408,6 @@
     const resetBtn = document.getElementById("resetBtn");
 
     const thumbPreview = document.getElementById("thumbPreview");
-    const videoPreview = document.getElementById("videoPreview");
     const statusEl = document.getElementById("status");
     const adviceList = document.getElementById("adviceList");
 
@@ -447,7 +422,6 @@
     const overallBar = document.getElementById("overallBar");
 
     let currentImageElement = null;
-    let currentVideoId = null;
 
     function setStatus(message, isError = false) {
       statusEl.textContent = message;
@@ -465,15 +439,15 @@
     }
 
     function resetScores() {
-      setScore(brightnessValue, brightnessBar, 0);
-      setScore(saturationValue, saturationBar, 0);
-      setScore(complexityValue, complexityBar, 0);
-      setScore(overallValue, overallBar, 0);
-
       brightnessValue.textContent = "-";
       saturationValue.textContent = "-";
       complexityValue.textContent = "-";
       overallValue.textContent = "-";
+
+      brightnessBar.style.width = "0%";
+      saturationBar.style.width = "0%";
+      complexityBar.style.width = "0%";
+      overallBar.style.width = "0%";
     }
 
     function renderAdvice(items) {
@@ -510,20 +484,8 @@
       }
     }
 
-  function getProxyThumbnailUrl(videoId) {
-    return "https://odd-resonance-fd5e.paladin-world-0819.workers.dev/thumb-proxy?id=" + encodeURIComponent(videoId);
-  }
-
-    function showVideoPreview(videoId) {
-      videoPreview.classList.remove("hidden");
-      videoPreview.innerHTML = `
-        <iframe
-          src="https://www.youtube.com/embed/${videoId}"
-          title="YouTube video preview"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      `;
+    function getProxyThumbnailUrl(videoId) {
+      return "https://odd-resonance-fd5e.paladin-world-0819.workers.dev/thumb-proxy?id=" + encodeURIComponent(videoId);
     }
 
     async function loadThumbnail() {
@@ -535,17 +497,17 @@
         return;
       }
 
-      currentVideoId = videoId;
+      currentImageElement = null;
       setStatus("サムネイルを取得中です...");
 
       const thumbUrl = getProxyThumbnailUrl(videoId);
       const img = new Image();
+      img.crossOrigin = "anonymous";
 
       img.onload = () => {
         currentImageElement = img;
         thumbPreview.innerHTML = "";
         thumbPreview.appendChild(img);
-        showVideoPreview(videoId);
         renderAdvice(["サムネイルの取得が完了しました。「診断する」を押してください。"]);
         setStatus("サムネイルを表示しました。");
       };
@@ -694,19 +656,14 @@
         setStatus("診断が完了しました。");
       } catch (error) {
         console.error(error);
-        setStatus("診断に失敗しました。Workerの設定をご確認ください。", true);
+        setStatus("診断に失敗しました。コンソールを確認してください。", true);
       }
     }
 
     function resetAll() {
       youtubeUrlInput.value = "";
       currentImageElement = null;
-      currentVideoId = null;
-
       thumbPreview.innerHTML = "ここにサムネ画像が表示されます";
-      videoPreview.innerHTML = "";
-      videoPreview.classList.add("hidden");
-
       resetScores();
       renderAdvice(["URLを入力して「サムネを表示」を押してください。"]);
       setStatus("");
