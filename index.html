@@ -510,9 +510,9 @@
       }
     }
 
-    function getProxyThumbnailUrl(videoId) {
-      return "https://img.youtube.com/vi/" + encodeURIComponent(videoId) + "/hqdefault.jpg";
-    }
+  function getProxyThumbnailUrl(videoId) {
+    return "https://odd-resonance-fd5e.paladin-world-0819.workers.dev/thumb-proxy?id=" + encodeURIComponent(videoId);
+  }
 
     function showVideoPreview(videoId) {
       videoPreview.classList.remove("hidden");
