@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<!-- AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9400205162799209"
+     crossorigin="anonymous"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-5P54EG4RNH"></script>
 <script>
@@ -326,6 +329,17 @@
       color: #64748b;
       font-size: 13px;
     }
+  .ad-top {
+  margin: 30px 0;
+}
+
+.ad-middle {
+  margin: 40px 0;
+}
+
+.ad-bottom {
+  margin: 50px 0;
+}
 
     @media (max-width: 900px) {
       .top-grid {
@@ -363,6 +377,18 @@
       サムネイル制作の改善ヒントを見つけたいときや、競合の見せ方をざっくり比較したいときに活用できます。
     </p>
   </section>
+<div class="ad-top"> 
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-9400205162799209"
+       data-ad-slot="6866968939"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+</div>
+
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
   <main class="wrap">
     <section id="tool" class="tool-box">
@@ -440,6 +466,18 @@
           <li>URLを入力して「URLから表示」を押すか、画像をアップロードしてください。</li>
         </ul>
       </div>
+<div class="ad-middle"> 
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-9400205162799209"
+       data-ad-slot="6866968939"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+</div>
+
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
       <div id="about" class="panel about">
         <h2>このツールについて</h2>
@@ -460,7 +498,18 @@
       </div>
     </section>
   </main>
+<div class="ad-bottom"> 
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-9400205162799209"
+       data-ad-slot="6866968939"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+</div>
 
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
   <footer>
     © NextFeed
   </footer>
@@ -777,7 +826,16 @@
     }
 
     loadBtn.addEventListener("click", loadThumbnailFromUrl);
-    analyzeBtn.addEventListener("click", runDiagnosis);
+    
+  analyzeBtn.addEventListener("click", () => {
+    runDiagnosis();
+
+    gtag('event', 'analyze_click', {
+      event_category: 'tool',
+      event_label: 'thumbnail_diagnosis'
+    });
+  });
+    
     resetBtn.addEventListener("click", resetAll);
 
     imageUpload.addEventListener("change", (event) => {
